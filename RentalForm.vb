@@ -1,6 +1,7 @@
 ﻿'Alexis Villagran
 'RCET
 'Spring 2025
+'https://github.com/alxsvxn/CarRental_AV
 
 Option Explicit On
 Option Strict On
@@ -69,10 +70,10 @@ Public Class RentalForm
 
 		Dim days As Integer
 		If Not Integer.TryParse(DaysTextBox.Text, days) Then
-			message += "Number of Days must be a whole number." & vbCrLf
+			message += "Number must be a whole number." & vbCrLf
 			valid = False
 		ElseIf days <= 0 OrElse days > 45 Then
-			message += "Number of Days must be between 1 and 45." & vbCrLf
+			message += "Number must be between 1 and 45." & vbCrLf
 			valid = False
 		End If
 
@@ -83,5 +84,72 @@ Public Class RentalForm
 		Return valid
 	End Function
 
+	Dim totalCustomers As Integer = 0
+	Dim totalMiles As Double = 0
+	Dim totalCharges As Decimal = 0
 
+	Private Sub CalculateButton_Click(sender As Object, e As EventArgs) Handles CalculateButton.Click
+		If InputsAreValid() Then
+			Dim beginOdometer As Double = Convert.ToDouble(BeginOdometerTextBox.Text)
+			Dim endOdometer As Double = Convert.ToDouble(EndOdometerTextBox.Text)
+			Dim days As Integer = Convert.ToInt32(DaysTextBox.Text)
+			Dim distance As Double = endOdometer - beginOdometer
+			Dim mileageCharge As Decimal = 0D
+			If distance > 200 AndAlso distance <= 500 Then
+				mileageCharge = CDec((distance - 200) * 0.12)
+			ElseIf distance > 500 Then
+				mileageCharge = CDec((300 * 0.12) + ((distance - 500) * 0.1))
+			End If
+
+			If KilometersradioButton.Checked Then
+				distance = distance * 0.62
+			End If
+
+
+
+			Dim dayCharge As Decimal = CDec(days) * 15D
+			Dim discountRate As Decimal = 0D
+
+			If AAAcheckbox.Checked Then discountRate += 0.05D
+			If Seniorcheckbox.Checked Then discountRate += 0.03D
+
+			Dim discountAmount As Decimal = (mileageCharge + dayCharge) * discountRate
+			Dim totalOwed As Decimal = (mileageCharge + dayCharge) - discountAmount
+
+			TotalMilesTextBox.Text = distance.ToString("F2") & " mi"
+			MileageChargeTextBox.Text = FormatCurrency(mileageCharge)
+			DayChargeTextBox.Text = FormatCurrency(dayCharge)
+			TotalDiscountTextBox.Text = FormatCurrency(discountAmount)
+			TotalChargeTextBox.Text = FormatCurrency(totalOwed)
+
+			totalCustomers += 1
+			totalMiles += distance
+			totalCharges += totalOwed
+
+			SummaryButton.Enabled = True
+		End If
+	End Sub
+	Private Sub ClearButton_Click(sender As Object, e As EventArgs) Handles ClearButton.Click
+		SetDefaults()
+	End Sub
+
+	Private Sub ExitButton_Click(sender As Object, e As EventArgs) Handles ExitButton.Click
+		Dim result As DialogResult = MessageBox.Show("Are you sure you want to exit?", "Exit", MessageBoxButtons.YesNo)
+		If result = DialogResult.Yes Then
+			Me.Close()
+		End If
+	End Sub
+
+
+
+	Private Sub CarRentalForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+		SetDefaults()
+		SummaryButton.Enabled = False
+	End Sub
+	Private Sub SummaryButton_Click(sender As Object, e As EventArgs) Handles SummaryButton.Click
+		Dim summary As String = "Total Customers: " & totalCustomers.ToString() & vbCrLf &
+							"Total Miles Driven: " & totalMiles.ToString("F2") & " mi" & vbCrLf &
+							"Total Charges: " & FormatCurrency(totalCharges)
+		MsgBox(summary)
+	End Sub
 End Class
